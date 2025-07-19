@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 
 class Tag(models.Model):
+    # TODO research Django "taggit" before moving to production
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(unique=True) # good for URLs like ?tag=shakespeare
 
@@ -27,10 +28,25 @@ class Work(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    raw_text = models.TextField(blank=True, help_text="Paste full poem text here")
+
     tags = models.ManyToManyField(Tag, related_name="works", blank=True)
 
     def __str__(self):
         return f"{self.title} by {self.author if self.author else 'unknown'}"
+    
+    def split_into_sections_and_units(self):
+        sections_text = [s.strip() for s in self.raw_text.strip().split("\n\n") if s.strip()]
+        structured_sections = []
+
+        for section_index, section in enumerate(sections_text):
+            lines = [line.strip() for line in section.split("\n") if line.strip()]
+            structured_sections.append({
+                "order": section_index, 
+                "lines": [{"order": i, "text": line} for i, line in enumerate(lines)]
+            })
+
+        return structured_sections
     
 
 class Section(models.Model):

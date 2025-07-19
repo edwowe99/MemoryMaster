@@ -15,6 +15,31 @@ class WorkAdmin(admin.ModelAdmin):
     search_fields = ("title", "author")
     inlines = [SectionInline, UnitInline]  # ✅ nested forms
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        if obj.raw_text:
+            structured = obj.split_into_sections_and_units
+
+            Section.objects.filter(work=obj).delete()
+
+            for sec_data in structured:
+                section = Section.objects.create(
+                    work=obj,
+                    title=f"Section {sec_data['order']}",
+                    order_index=sec_data['order']
+                )
+                for line in sec_data["lines"]:
+                    Unit.objects.create(
+                        work=obj,
+                        section=section,
+                        text=line["text"],
+                        order_index=line["order"]
+                    )
+
+            obj.raw_text=""
+            obj.save()
+
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
     list_display = ("title", "work", "order_index")
