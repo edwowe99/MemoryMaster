@@ -2,6 +2,14 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import User
 
+
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(unique=True) # good for URLs like ?tag=shakespeare
+
+    def __str__(self):
+        return self.name
+
 class Work(models.Model):
     WORK_TYPES = [
         ('poem', 'Poem'), # Flexibility to extend this to speech, duologue, etc
@@ -19,8 +27,10 @@ class Work(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    tags = models.ManyToManyField(Tag, related_name="works", blank=True)
+
     def __str__(self):
-        return self.title
+        return f"{self.title} by {self.author if self.author else 'unknown'}"
     
 
 class Section(models.Model):
