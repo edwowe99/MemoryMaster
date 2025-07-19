@@ -19,9 +19,10 @@ class WorkAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
         if obj.raw_text:
-            structured = obj.split_into_sections_and_units
+            structured = obj.split_into_sections_and_units()
 
             Section.objects.filter(work=obj).delete()
+            Unit.objects.filter(work=obj).delete()
 
             for sec_data in structured:
                 section = Section.objects.create(

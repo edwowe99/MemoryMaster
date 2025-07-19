@@ -36,7 +36,10 @@ class Work(models.Model):
         return f"{self.title} by {self.author if self.author else 'unknown'}"
     
     def split_into_sections_and_units(self):
-        sections_text = [s.strip() for s in self.raw_text.strip().split("\n\n") if s.strip()]
+        # Normalize all line endings to \n
+        normalized_text = self.raw_text.replace("\r\n", "\n").replace("\r", "\n").strip()
+
+        sections_text = [s.strip() for s in normalized_text.strip().split("\n\n") if s.strip()]
         structured_sections = []
 
         for section_index, section in enumerate(sections_text):
@@ -55,6 +58,9 @@ class Section(models.Model):
     title = models.CharField(max_length=255, blank=True)
     order_index = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        ordering = ["order_index"]
+
     def __str__(self):
         return f"{self.work.title} - {self.title or 'Untitled Section'}"
     
@@ -67,6 +73,9 @@ class Unit(models.Model):
     text = models.TextField()
     speaker = models.CharField(max_length=255, blank=True, null=True)  # For duologues
     metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["section__order_index", "order_index"]
 
     def __str__(self):
         return f"{self.order_index}: {self.text[:30]}..."
