@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Work, Section, Unit
+from .models import Work, Section, Unit, UserWorkProgress, UserHistory, UserUnitProgress
+from django.utils.html import format_html
+from django.urls import reverse
 
 class SectionInline(admin.TabularInline):
     model = Section
@@ -52,3 +54,30 @@ class UnitAdmin(admin.ModelAdmin):
     list_display = ("text", "work", "section", "order_index")
     list_filter = ("work", "section")
     search_fields = ("text",)
+
+
+
+@admin.register(UserWorkProgress)
+class UserWorkProgressAdmin(admin.ModelAdmin):
+    list_display = ("user", "work", "mastery_score", "last_practiced_at", "view_unit_progress_link")
+
+    def view_unit_progress_link(self, obj):
+        url = (
+            reverse("admin:memorise_userunitprogress_changelist")
+            + f"?user__id__exact={obj.user.id}"
+        )
+        return format_html('<a href="{}">View Unit Progress</a>', url)
+    view_unit_progress_link.short_description = "Unit Progress"
+
+@admin.register(UserHistory)
+class UserHistoryAdmin(admin.ModelAdmin):
+    list_display = ("user", "work", "mode", "score", "cap", "timestamp")
+    list_filter = ("mode", "timestamp")
+    search_fields = ("user__username", "work__title")
+
+
+@admin.register(UserUnitProgress)
+class UserUnitProgressAdmin(admin.ModelAdmin):
+    list_display = ("user", "unit", "mastery_score", "last_practiced_at", "times_practiced")
+    list_filter = ("user", "unit")
+    search_fields = ("user__username", "unit__title")

@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.text import slugify
 
 
 class Tag(models.Model):
@@ -17,6 +18,7 @@ class Work(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug=models.SlugField(unique=True, blank=True)
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255, blank=True)
     type = models.CharField(max_length=50, choices=WORK_TYPES)
@@ -50,6 +52,21 @@ class Work(models.Model):
             })
 
         return structured_sections
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.title)
+            slug_candidate = base_slug
+            counter = 1
+
+            # Keep checking until we find a unique slug
+            while Work.objects.filter(slug=slug_candidate).exists():
+                counter += 1
+                slug_candidate = f"{base_slug}-{counter}"
+
+            self.slug = slug_candidate
+        
+        super().save(*args, **kwargs)
     
 
 class Section(models.Model):
